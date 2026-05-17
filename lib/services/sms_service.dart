@@ -34,6 +34,26 @@ class SmsService {
     );
   }
 
+  Future<SmsResult> sendParcelRedirectedSms({
+    required String senderPhone,
+    required String receiverPhone,
+    required String trackingId,
+    required String targetOfficeName,
+  }) async {
+    return _sendDualSms(
+      senderPhone: senderPhone,
+      receiverPhone: receiverPhone,
+      senderMessage:
+          'Sri Lanka Post: Your COD parcel ($trackingId) has been redirected '
+          'to the correct delivery office: $targetOfficeName. '
+          'Track: $_trackingBaseUrl$trackingId',
+      receiverMessage:
+          'Sri Lanka Post: Your parcel ($trackingId) was sorted incorrectly '
+          'and is now being rerouted to $targetOfficeName Post Office for local delivery. '
+          'Track: $_trackingBaseUrl$trackingId',
+    );
+  }
+
   Future<SmsResult> sendDeliveryCompletedSms({
     required String senderPhone,
     required String receiverPhone,
@@ -47,13 +67,14 @@ class SmsService {
       senderPhone: senderPhone,
       receiverPhone: receiverPhone,
       senderMessage:
-          'Sri Lanka Post: Parcel successfully delivered to recipient. '
+          'Sri Lanka Post: Your parcel has been successfully delivered. '
           'Tracking No: $trackingId. '
           'COD amount of Rs. $codText has been collected. '
           'Delivering office: $deliveredPostOfficeName.',
       receiverMessage:
           'Sri Lanka Post: Your parcel has been successfully delivered. '
           'Tracking No: $trackingId. '
+          'COD amount of Rs. $codText has been paid. '
           'Delivered by: $deliveredPostOfficeName Post Office. '
           'Thank you for using Sri Lanka Post.',
     );
@@ -101,7 +122,6 @@ class SmsService {
     }
   }
 
-  /// Sends a single SMS via Notify.lk API with retry support.
   Future<bool> _sendWithRetry(
     String phone,
     String message, {
@@ -148,8 +168,6 @@ class SmsService {
     return false;
   }
 
-  /// Normalizes Sri Lankan phone numbers to international format.
-  /// Notify.lk does not need + prefix.
   String _normalizeSriLanka(String phone) {
     String cleaned = phone.replaceAll(RegExp(r'[^\d]'), '');
 

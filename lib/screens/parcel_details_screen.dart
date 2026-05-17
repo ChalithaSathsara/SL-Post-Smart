@@ -112,6 +112,7 @@ class _ParcelDetailsScreenState extends State<ParcelDetailsScreen> {
     setState(() => _redirecting = true);
 
     try {
+      // 1. Save redirect to Firestore
       await _firestoreService.redirectParcel(
         trackingId: parcel.trackingId,
         sentFromPostOffice: form.sentFromPostOffice,
@@ -119,12 +120,42 @@ class _ParcelDetailsScreenState extends State<ParcelDetailsScreen> {
         redirectReason: form.redirectReason,
       );
 
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Parcel redirected to ${form.redirectToPostOffice}'),
-        ),
+      debugPrint('Redirect SMS -> senderPhone: ${parcel.senderPhone}');
+      debugPrint('Redirect SMS -> receiverPhone: ${parcel.receiverPhone}');
+      debugPrint('Redirect SMS -> trackingId: ${parcel.trackingId}');
+      debugPrint('Redirect SMS -> targetOffice: ${form.redirectToPostOffice}');
+
+      // 2. Send SMS to both parties
+      final smsResult = await _smsService.sendParcelRedirectedSms(
+        senderPhone: parcel.senderPhone,
+        receiverPhone: parcel.receiverPhone,
+        trackingId: parcel.trackingId,
+        targetOfficeName: form.redirectToPostOffice,
       );
+
+      debugPrint(
+        'Redirect SMS result: success=${smsResult.success} / msg=${smsResult.message}',
+      );
+
+      if (!mounted) return;
+
+      if (!smsResult.success && smsResult.message != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Redirect saved. SMS issue: ${smsResult.message}'),
+            backgroundColor: Colors.orange.shade800,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Parcel redirected to ${form.redirectToPostOffice}. SMS alerts sent.',
+            ),
+          ),
+        );
+      }
+
       await _loadParcel();
     } catch (e) {
       if (!mounted) return;
@@ -148,12 +179,19 @@ class _ParcelDetailsScreenState extends State<ParcelDetailsScreen> {
     try {
       await _firestoreService.markParcelAsDelivered(parcel.trackingId);
 
+      // Use redirectToPostOffice if redirected, otherwise use senderPostOffice
+      final deliveringOffice = parcel.isRedirected
+          ? (parcel.redirectToPostOffice ?? parcel.senderPostOffice)
+          : parcel.senderPostOffice;
+
+      debugPrint('Delivery office used in SMS: $deliveringOffice');
+
       final smsResult = await _smsService.sendDeliveryCompletedSms(
         senderPhone: parcel.senderPhone,
         receiverPhone: parcel.receiverPhone,
         trackingId: parcel.trackingId,
         totalCod: parcel.totalCod,
-        deliveredPostOfficeName: parcel.sentFromPostOffice ?? 'Sri Lanka Post',
+        deliveredPostOfficeName: deliveringOffice,
       );
 
       if (!mounted) return;

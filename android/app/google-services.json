@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "31228850927",
+    "project_id": "postalapp-afc09",
+    "storage_bucket": "postalapp-afc09.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:31228850927:android:efc07c3050007e12e3611a",
+        "android_client_info": {
+          "package_name": "com.postalapp.postal_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkvO8XntXLOhPoEVffJcXMKqENNR2asBc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
